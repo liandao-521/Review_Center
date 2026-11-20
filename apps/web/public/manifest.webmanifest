@@ -1,0 +1,13 @@
+{
+  "name": "题集 · 中学生试题管理",
+  "short_name": "题集",
+  "description": "整理试题、记录练习、生成错题练习卷",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f4f0",
+  "theme_color": "#f5f4f0",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

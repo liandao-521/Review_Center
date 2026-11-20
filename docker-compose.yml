@@ -1,0 +1,19 @@
+services:
+  review-center:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: file:/data/review-center.db
+      DATA_DIR: /data
+      COOKIE_SECURE: "false"
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?请在项目根目录 .env 中设置 ADMIN_PASSWORD}
+      RUST_LOG: info
+    volumes:
+      - review-center-data:/data
+
+volumes:
+  review-center-data:

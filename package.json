@@ -1,0 +1,17 @@
+{
+  "name": "review-center",
+  "private": true,
+  "engines": { "node": ">=22.22.3" },
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "npm run db:push && concurrently -k -n api,web -c blue,green \"npm run start:dev -w @review-center/api\" \"npm run dev -w @review-center/web\"",
+    "build": "npm run build -w @review-center/api && npm run build -w @review-center/web",
+    "db:generate": "npm run prisma:generate -w @review-center/api",
+    "db:migrate": "npm run prisma:migrate -w @review-center/api",
+    "db:push": "npm run prisma:push -w @review-center/api",
+    "db:studio": "npm run prisma:studio -w @review-center/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

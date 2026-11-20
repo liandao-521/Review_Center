@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id           String   @id @default(cuid())
+  username     String   @unique @default("student")
+  displayName  String   @default("学生")
+  passwordHash String
+  expiresAt    DateTime?
+  active       Boolean  @default(true)
+  isClassAdmin Boolean  @default(false)
+  classroomId  String   @default("default-class")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  classroom    Classroom @relation(fields: [classroomId], references: [id])
+  sessions     Session[]
+  student      Student?
+  papers       Paper[]
+  personalPapers Paper[] @relation("PaperOwner")
+  questions    Question[]
+  questionAssignments QuestionEditorAssignment[]
+}
+
+model Session {
+  tokenHash String   @id
+  role      String   @default("student")
+  accountId String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+model Classroom {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  accounts  Account[]
+  papers    Paper[]
+}
+
+model Student {
+  id        String            @id @default(cuid())
+  name      String
+  accountId String            @unique
+  createdAt DateTime          @default(now())
+  account   Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  attempts  PracticeAttempt[]
+  mastery   QuestionMastery[]
+  questions StudentQuestion[]
+}
+
+model Paper {
+  id           String     @id @default(cuid())
+  title        String
+  subject      String
+  grade        String?
+  originalName String?
+  fileName     String?    @unique
+  createdAt    DateTime   @default(now())
+  scope        String     @default("CLASSROOM")
+  classroomId  String     @default("default-class")
+  ownerAccountId String?
+  originId     String?
+  createdById  String     @default("family")
+  classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  owner        Account?   @relation("PaperOwner", fields: [ownerAccountId], references: [id], onDelete: Cascade)
+  createdBy    Account    @relation(fields: [createdById], references: [id])
+  questions    Question[]
+
+  @@unique([classroomId, originId])
+  @@index([scope, ownerAccountId])
+}
+
+model Question {
+  id           String            @id @default(cuid())
+  subject      String
+  questionType String?
+  grade        String?
+  content      String
+  answer       String            @default("")
+  explanation  String            @default("")
+  paperId      String
+  pageNumber   Int?
+  majorNumber  Int?
+  minorNumber  Int?
+  sourceTitle  String?
+  originId     String?
+  createdById  String   @default("family")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  paper        Paper             @relation(fields: [paperId], references: [id], onDelete: Restrict)
+  createdBy    Account           @relation(fields: [createdById], references: [id])
+  tags         QuestionTag[]
+  images       QuestionImage[]
+  attempts     PracticeAttempt[]
+  mastery      QuestionMastery[]
+  students     StudentQuestion[]
+  editors      QuestionEditorAssignment[]
+
+  @@unique([paperId, majorNumber, minorNumber])
+  @@index([subject, grade])
+  @@index([questionType])
+  @@index([paperId])
+  @@unique([paperId, originId])
+}
+
+model QuestionEditorAssignment {
+  questionId String
+  accountId  String
+  assignedAt DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, accountId])
+  @@index([accountId])
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  questions QuestionTag[]
+}
+
+model QuestionTag {
+  questionId String
+  tagId      String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tagId])
+  @@index([tagId])
+}
+
+model QuestionImage {
+  id           String   @id @default(cuid())
+  questionId   String
+  fileName     String   @unique
+  originalName String
+  rotation     Int      @default(0)
+  displayScale Float    @default(1)
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, position])
+}
+
+model PracticeAttempt {
+  id         String   @id @default(cuid())
+  questionId String
+  studentId  String?
+  isCorrect  Boolean
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  student    Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@index([questionId, isCorrect])
+  @@index([studentId, questionId])
+}
+
+model QuestionMastery {
+  id         String   @id @default(cuid())
+  studentId  String
+  questionId String
+  score      Int
+  updatedAt  DateTime @updatedAt
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, questionId])
+  @@index([questionId])
+}
+
+model StudentQuestion {
+  studentId  String
+  questionId String
+  createdAt  DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, questionId])
+  @@index([questionId])
+}
